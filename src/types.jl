@@ -28,6 +28,35 @@ struct Atmosphere1D{
     electron_density::A
     hydrogen1_density::A  # neutral hydrogen across all levels
     proton_density::A
+    plasma_density::A
+end
+
+
+function Atmosphere1D(
+    nx::Int,
+    ny::Int,
+    nz::Int,
+    z::V,
+    temperature::A,
+    velocity_z::A,
+    electron_density::A,
+    hydrogen1_density::A,
+    proton_density::A
+) where {T, N, A<:AbstractArray{T,N}, V<:AbstractVector{T}}
+
+    # Default plasma density: zero field with same shape as proton density
+    plasma_density = similar(proton_density)
+    fill!(plasma_density, zero(eltype(proton_density)))
+
+    return Atmosphere1D{N,T,A,V}(
+        nx, ny, nz, z,
+        temperature,
+        velocity_z,
+        electron_density,
+        hydrogen1_density,
+        proton_density,
+        plasma_density
+    )
 end
 
 
@@ -49,6 +78,41 @@ struct Atmosphere3D{
     electron_density::A
     hydrogen1_density::A  # neutral hydrogen across all levels
     proton_density::A
+    plasma_density::A
+end
+
+
+function Atmosphere3D(
+    nx::Int,
+    ny::Int,
+    nz::Int,
+    x::V,
+    y::V,
+    z::V,
+    temperature::A,
+    velocity_x::A,
+    velocity_y::A,
+    velocity_z::A,
+    electron_density::A,
+    hydrogen1_density::A,
+    proton_density::A
+) where {T, A<:AbstractArray{T,3}, V<:AbstractVector{T}}
+
+    plasma_density = similar(proton_density)
+    fill!(plasma_density, zero(eltype(proton_density)))
+
+    return Atmosphere3D{T,A,V}(
+        nx, ny, nz,
+        x, y, z,
+        temperature,
+        velocity_x,
+        velocity_y,
+        velocity_z,
+        electron_density,
+        hydrogen1_density,
+        proton_density,
+        plasma_density
+    )
 end
 
 

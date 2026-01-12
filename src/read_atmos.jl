@@ -187,6 +187,7 @@ function read_atmos_multi3d(mesh_file, atmos_file; grph=2.380491f-24)
     # Get parameters and height scale
     u_l = ustrip(1f0u"cm" |> u"m")
     u_v = ustrip(1f0u"km" |> u"m")
+    u_m = ustrip(1f0u"g" |> u"kg")
     nx::Int64, ny::Int64, nz::Int64, x, y, z = read_mesh(mesh_file)
     x .*= u_l
     y .*= u_l
@@ -208,12 +209,14 @@ function read_atmos_multi3d(mesh_file, atmos_file; grph=2.380491f-24)
     nH = permutedims(tmp, (3, 2, 1))
     close(fobj)
     proton_density = similar(temperature)
+    plasma_density = similar(temperature)
 
     # unit conversion and ion frac
     rho_to_nH = 1 / (grph * u_l^3)
 
     Threads.@threads for i in eachindex(temperature)
         electron_density[i] = electron_density[i] / u_l^3
+        plasma_density[i] = nH[i] * u_m / u_l^3
         ionfrac = Muspel.h_ionfrac_saha(temperature[i], electron_density[i])
         proton_density[i] = nH[i] * rho_to_nH * ionfrac
         nH[i] *= rho_to_nH * (1 - ionfrac)
@@ -236,6 +239,7 @@ function read_atmos_multi3d(mesh_file, atmos_file; grph=2.380491f-24)
         electron_density,
         nH,
         proton_density,
+        plasma_density
     )
 end
 
