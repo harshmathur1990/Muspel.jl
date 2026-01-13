@@ -63,20 +63,21 @@ end
 struct Atmosphere3D{
     T <: Real,
     A <: AbstractArray{T, 3},
-    V <:AbstractVector{T}
+    Z <: Union{AbstractVector{T}, AbstractArray{T,3}},
+    V <: AbstractVector{T}
 } <: AbstractAtmos3D{T}
     nx::Int64
     ny::Int64
     nz::Int64
     x::V
     y::V
-    z::V
+    z::Z                  # can be 1D or 3D
     temperature::A
     velocity_x::A
     velocity_y::A
     velocity_z::A
     electron_density::A
-    hydrogen1_density::A  # neutral hydrogen across all levels
+    hydrogen1_density::A
     proton_density::A
     plasma_density::A
 end
@@ -88,7 +89,7 @@ function Atmosphere3D(
     nz::Int,
     x::V,
     y::V,
-    z::V,
+    z::Z,
     temperature::A,
     velocity_x::A,
     velocity_y::A,
@@ -96,12 +97,12 @@ function Atmosphere3D(
     electron_density::A,
     hydrogen1_density::A,
     proton_density::A
-) where {T, A<:AbstractArray{T,3}, V<:AbstractVector{T}}
+) where {T, A<:AbstractArray{T,3}, Z<:Union{AbstractVector{T},AbstractArray{T,3}}, V<:AbstractVector{T}}
 
     plasma_density = similar(proton_density)
     fill!(plasma_density, zero(eltype(proton_density)))
 
-    return Atmosphere3D{T,A,V}(
+    return Atmosphere3D{T,A,Z,V}(
         nx, ny, nz,
         x, y, z,
         temperature,
@@ -159,6 +160,13 @@ function Base.getindex(a::AbstractAtmos1D, args...)
     )
 end
 
+@inline function slice_z(a::AbstractAtmos3D, iz, iy, ix)
+    if a.z isa AbstractVector
+        return a.z[iz]
+    else
+        return a.z[iz, iy, ix]
+    end
+end
 
 function Base.getindex(a::AbstractAtmos3D, i, j, k)
     iz, iy, ix = to_indices(a.temperature, (i, j, k))
@@ -175,7 +183,7 @@ function Base.getindex(a::AbstractAtmos3D, i, j, k)
             nz,
             a.x[ix],
             a.y[iy],
-            a.z[iz],
+            slice_z(a, iz, iy, ix),          # ← works for 1D or 3D z
             a.temperature[iz, iy, ix],
             a.velocity_x[iz, iy, ix],
             a.velocity_y[iz, iy, ix],
@@ -203,7 +211,7 @@ function Base.getindex(a::AbstractAtmos3D, i, j, k)
             nx = length(ix)
             ny = length(iy)
             nz = length(iz)
-            z = a.z[iz]
+            z = slice_z(a, iz, iy, ix)     # ← key fix
             vz = a.velocity_z[iz, iy, ix]
         end
         return Atmosphere1D(
