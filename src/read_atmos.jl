@@ -318,11 +318,15 @@ function read_pops_multi3d(pop_file, nx, ny, nz, nlevels)
     u_l = ustrip(1f0u"cm" |> u"m")
     inv_ul3 = inv(u_l^3)
 
+    fobj = open(pop_file, "r")
+
     pops     = Array{Float32}(undef, nx, ny, nz, nlevels)
     pops_lte = Array{Float32}(undef, nx, ny, nz, nlevels)
 
-    read!(pop_file, pops)
-    read!(pop_file, pops_lte)
+    read!(fobj, pops)
+    read!(fobj, pops_lte)
+    
+    close(fobj)
 
     Threads.@threads for i in eachindex(pops)
         pops[i]     *= inv_ul3
