@@ -314,14 +314,23 @@ end
 Reads NLTE populations from MULTI3D output. Does NOT permute dims. Only Float32
 files are supported at the moment.
 """
-function read_pops_multi3d(pop_file, nx, ny, nz, nlevels)::Array{Float32, 4}
+function read_pops_multi3d(pop_file, nx, ny, nz, nlevels)
     u_l = ustrip(1f0u"cm" |> u"m")
-    pops = Array{Float32}(undef, nx, ny, nz, nlevels)
+    inv_ul3 = inv(u_l^3)
+
+    pops     = Array{Float32}(undef, nx, ny, nz, nlevels)
+    pops_lte = Array{Float32}(undef, nx, ny, nz, nlevels)
+
     read!(pop_file, pops)
+    read!(pop_file, pops_lte)
+
     Threads.@threads for i in eachindex(pops)
-        pops[i] /= u_l^3
+        pops[i]     *= inv_ul3
+        pops_lte[i] *= inv_ul3
     end
-    return PermutedDimsArray(pops, (3, 2, 1, 4))
+
+    return PermutedDimsArray(pops,     (3, 2, 1, 4)),
+           PermutedDimsArray(pops_lte, (3, 2, 1, 4))
 end
 
 
