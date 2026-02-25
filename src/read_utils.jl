@@ -11,11 +11,7 @@ function read_atom(atom_file; FloatT=Float64, IntT=Int)
     element = Symbol(data["element"]["symbol"])
     Z = elements[element].number
 
-    if "abundance" in keys(data["element"])
-        abundance = FloatT(data["element"]["abundance"])
-    else
-        abundance = elements[element].abundance   # fallback from table
-    end
+    abundance = data["element"]["abundance"]
 
     if "atomic_mass" in keys(data["element"])
         mass = _assign_unit(data["element"]["atomic_mass"]) |> u"kg"
