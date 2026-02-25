@@ -293,6 +293,7 @@ struct AtomicModel{Nlevel, FloatT <: AbstractFloat, IntT <: Integer}
     nlines::IntT
     ncontinua::IntT
     Z::IntT
+    abundance::FloatT
     mass::FloatT
     χ::SVector{Nlevel, FloatT}  # Energy in J or aJ?
     g::SVector{Nlevel, IntT}

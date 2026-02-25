@@ -10,11 +10,19 @@ function read_atom(atom_file; FloatT=Float64, IntT=Int)
     data = YAML.load_file(atom_file)
     element = Symbol(data["element"]["symbol"])
     Z = elements[element].number
+
+    if "abundance" in keys(data["element"])
+        abundance = FloatT(data["element"]["abundance"])
+    else
+        abundance = elements[element].abundance   # fallback from table
+    end
+
     if "atomic_mass" in keys(data["element"])
         mass = _assign_unit(data["element"]["atomic_mass"]) |> u"kg"
     else
         mass = elements[element].atomic_mass |> u"kg"
     end
+
     levels = data["atomic_levels"]
     nlevels = length(levels)
     level_ids = collect(keys(levels))
@@ -44,9 +52,11 @@ function read_atom(atom_file; FloatT=Float64, IntT=Int)
     # Collisions
     # ...
     # Package things nicely and convert to types
-    return AtomicModel{nlevels, FloatT, IntT}(element, nlevels, nlines, ncont, Z,
-                                              ustrip(mass), ustrip.(χ), g, stage,
-                                              label, lines, continua)
+    return AtomicModel{nlevels, FloatT, IntT}(
+        element, nlevels, nlines, ncont, Z,
+        abundance, ustrip(mass), ustrip.(χ), g, stage,
+        label, lines, continua
+    )
 end
 
 
