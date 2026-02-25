@@ -6,12 +6,30 @@ Reading functions.
 """
 Reads atom in YAML format, returns AtomicModel structure
 """
+
+const SOLAR_ABUNDANCE = Dict(
+    "H"=>12.00,"He"=>10.93,"C"=>8.43,"N"=>7.83,"O"=>8.69,
+    "Na"=>6.24,"Mg"=>7.60,"Al"=>6.45,"Si"=>7.51,
+    "S"=>7.12,"Ca"=>6.34,"Fe"=>7.50,"Ni"=>6.22,"K"=>5.03
+)
+
+
 function read_atom(atom_file; FloatT=Float64, IntT=Int)
     data = YAML.load_file(atom_file)
     element = Symbol(data["element"]["symbol"])
     Z = elements[element].number
 
-    abundance = data["element"]["abundance"]
+    if haskey(data["element"], "abundance")
+        abundance = data["element"]["abundance"]
+    else
+        abundance = get(SOLAR_ABUNDANCE, element, nothing)
+
+        if abundance === nothing
+            error("No abundance for element $element. Add it to solar table.")
+        end
+
+        @info "Using solar abundance $abundance for element $element"
+    end
 
     if "atomic_mass" in keys(data["element"])
         mass = _assign_unit(data["element"]["atomic_mass"]) |> u"kg"
