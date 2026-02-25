@@ -16,19 +16,20 @@ const SOLAR_ABUNDANCE = Dict(
 
 function read_atom(atom_file; FloatT=Float64, IntT=Int)
     data = YAML.load_file(atom_file)
-    element = Symbol(data["element"]["symbol"])
+    element_str = String(data["element"]["symbol"])
+    element     = Symbol(element_str)  
     Z = elements[element].number
 
     if haskey(data["element"], "abundance")
         abundance = data["element"]["abundance"]
     else
-        abundance = get(SOLAR_ABUNDANCE, element, nothing)
+        abundance = get(SOLAR_ABUNDANCE, element_str, nothing)
 
         if abundance === nothing
-            error("No abundance for element $element. Add it to solar table.")
+            error("No abundance for element $element_str. Add it to solar table.")
         end
 
-        @info "Using solar abundance $abundance for element $element"
+        @info "Using solar abundance $abundance for element $element_str"
     end
 
     if "atomic_mass" in keys(data["element"])
